@@ -11,9 +11,13 @@
     "start": "node ./dist/index"
   },
   "dependencies": {
+    "axios": "^1.2.3",
+    "cron": "^2.2.0",
     "express": "^4.18.2"
   },
   "devDependencies": {
+    "@types/axios": "^0.14.0",
+    "@types/cron": "^2.0.0",
     "@types/express": "^4.17.16",
     "@types/node": "^18.11.18",
     "@typescript-eslint/eslint-plugin": "^5.49.0",

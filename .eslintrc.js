@@ -18,6 +18,9 @@ module.exports = {
     sourceType: 'module'
   },
   rules: {
+      "unicorn/filename-case": [
+          "off"
+      ],
       "unicorn/prevent-abbreviations": [
           "off"
       ]
