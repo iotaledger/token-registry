@@ -1,7 +1,9 @@
 import express, { Express, Request, Response } from 'express';
 import 'dotenv/config'
-import TokenRegistryService, { CacheDataAssetKey, supportedNetworks, SupportedNetworks } from './services/TokenRegistryService';
-
+import TokenRegistryService from './services/TokenRegistryService';
+import { CacheDataAssetKey } from './models/CacheType';
+import { supportedNetworks, SupportedNetworks } from './models/Networktype';
+import { AssetsRequestBody } from './models/AssetType';
 
 const app: Express = express();
 const port = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 4444;
@@ -17,27 +19,27 @@ app.get('/api/network/:network/:asset/:id', (request: Request, response: Respons
     const assetCache = getAssetCache(network, asset);
     const exists = assetCache.has(id);
 
-    response.status(200).send({
-        id,
-        type: asset === "native-tokens" ? "nativeToken" : "nft",
-        exists
-    });
+    response.status(200).send({[id]: exists});
 });
-
-type AssetRequestBody = {
-    ids: string[]
-}
 
 app.post('/api/network/:network/:asset', (request: Request, response: Response) => {
     const { network, asset } = request.params;
     validateNetwork(network, response);
     validateAsset(asset, response);
 
-    try {
-        response.status(200).send(request.body);
-    } catch {
-        response.status(400).send({ error: "Body must be json." })
+    const body = request.body as AssetsRequestBody;    
+    validateAssetsRequestBody(body, response);
+
+    const assetCache = getAssetCache(network, asset);
+    const results: {[key: string]: boolean} = {};
+    for (const id of body.ids) {
+        if (typeof id === 'string') {
+            const exists = assetCache.has(id);
+            results[id] = exists;
+        }
     }
+
+    response.status(200).send(results);
 });
 
 function getAssetCache(network: string, asset: string) {
@@ -55,6 +57,11 @@ function validateNetwork(network: string, response: Response) {
 function validateAsset(asset: string, response: Response) {
     if (!(asset === "nfts" || asset === "native-tokens")) {
         response.status(400).send({ error: "Bad asset path parameter." });
+    }
+}
+function validateAssetsRequestBody(body: AssetsRequestBody, response: Response) {
+    if (!body.ids || !Array.isArray(body.ids)) {
+        response.status(400).send({ error: "Bad request body." });
     }
 }
 

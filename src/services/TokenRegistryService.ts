@@ -2,30 +2,20 @@ import { AxiosResponse } from "axios";
 import { CronJob } from "cron";
 import { githubApiClient } from "../axios";
 import { AssetType } from "../models/AssetType";
+import { CacheEntry, TokenRegistryServiceCache } from "../models/CacheType";
 import { GithubItem } from "../models/GitHubItem";
+import { SupportedNetworks, supportedNetworks } from "../models/Networktype";
 
-type CacheEntry = {
-    projectName: string
-}
-
-export type CacheDataAssetKey = "nfts" | "nativeTokens";
-
-type CacheData = {
-    nfts: Map<string, CacheEntry>,
-    nativeTokens: Map<string, CacheEntry>
-}
-
-type TokenRegistryServiceCache = {
-    alphanet: CacheData,
-    testnet: CacheData,
-    shimmer: CacheData,
-    iota: CacheData
-}
-
-export const supportedNetworks = ["alphanet", "testnet", "shimmer", "iota"] as const;
-export type SupportedNetworks = typeof supportedNetworks[number];
 
 class TokenRegistryService {
+    /**
+     * The collect token data from github interval cron expression.
+     * Every hour at 0 min
+     */
+    private COLLECT_TOKEN_DATA_CRON = "0 * * * *";
+
+    private FILE_NAME_REGEX = /(?<project>\w+)-(?<id>\w+).json/;
+    
     private cache: TokenRegistryServiceCache;
 
     constructor() {
@@ -65,7 +55,7 @@ class TokenRegistryService {
     }
 
     private scheduleCron() {
-        // new CronJob('*/5 * * * * *', () => this.populateCache()).start();
+        new CronJob(this.COLLECT_TOKEN_DATA_CRON, () => this.populateCache()).start();
     }
 
     private async fetchAssetData(network: SupportedNetworks, assetType: AssetType) {
@@ -83,7 +73,7 @@ class TokenRegistryService {
 
             for (const file of fileItems) {
                 const fileName = file.name;
-                const fileNameRegex = new RegExp(/(?<project>\w+)-(?<id>\w+).json/);
+                const fileNameRegex = new RegExp(this.FILE_NAME_REGEX);
                 const match = fileName.match(fileNameRegex);
 
                 if (match?.groups) {
