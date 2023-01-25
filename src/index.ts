@@ -1,9 +1,9 @@
-import express, { Express, Request, Response } from 'express';
 import 'dotenv/config'
-import TokenRegistryService from './services/TokenRegistryService';
+import express, { Express, Request, Response } from 'express';
+import { AssetsRequestBody } from './models/AssetType';
 import { CacheDataAssetKey } from './models/CacheType';
 import { supportedNetworks, SupportedNetworks } from './models/Networktype';
-import { AssetsRequestBody } from './models/AssetType';
+import TokenRegistryService from './services/TokenRegistryService';
 
 const app: Express = express();
 const port = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 4444;
@@ -27,7 +27,7 @@ app.post('/api/network/:network/:asset', (request: Request, response: Response) 
     validateNetwork(network, response);
     validateAsset(asset, response);
 
-    const body = request.body as AssetsRequestBody;    
+    const body = request.body as AssetsRequestBody;
     validateAssetsRequestBody(body, response);
 
     const assetCache = getAssetCache(network, asset);

@@ -6,7 +6,6 @@ import { CacheEntry, TokenRegistryServiceCache } from "../models/CacheType";
 import { GithubItem } from "../models/GitHubItem";
 import { SupportedNetworks, supportedNetworks } from "../models/Networktype";
 
-
 class TokenRegistryService {
     /**
      * The collect token data from github interval cron expression.
@@ -15,7 +14,7 @@ class TokenRegistryService {
     private COLLECT_TOKEN_DATA_CRON = "0 * * * *";
 
     private FILE_NAME_REGEX = /(?<project>\w+)-(?<id>\w+).json/;
-    
+
     private cache: TokenRegistryServiceCache;
 
     constructor() {
