@@ -1,5 +1,7 @@
 import express, { Express, Request, Response } from 'express';
+import 'dotenv/config'
 import TokenRegistryService, { CacheDataAssetKey, supportedNetworks, SupportedNetworks } from './services/TokenRegistryService';
+
 
 const app: Express = express();
 const port = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 4444;
