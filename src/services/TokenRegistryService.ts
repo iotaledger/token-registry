@@ -1,42 +1,23 @@
 import { AxiosResponse } from "axios";
 import { CronJob } from "cron";
 import { githubApiClient } from "../axios";
-import { AssetType } from "../models/Assets";
-import { CacheEntry, TokenRegistryServiceCache } from "../models/TokenRegistryServiceCache";
-import { SupportedNetworks, supportedNetworks } from "../models/Networks";
-import { GithubItem } from "../models/Github";
+import { CacheEntry, Cache } from "../models/cache";
+import { GithubItem } from "../models/github";
+import { CONFIG } from "../config/configSchema";
 
 class TokenRegistryService {
-    /**
-     * The collect token data from github interval cron expression.
-     * Every hour at 0 min
-     */
-    private COLLECT_TOKEN_DATA_CRON = "0 * * * *";
+    private COLLECT_DATA_CRON_EXPR = "0 * * * *";
 
     private FILE_NAME_REGEX = /(?<project>\w+)-(?<id>\w+).json/;
 
-    private cache: TokenRegistryServiceCache;
+    private config: CONFIG;
 
-    constructor() {
-        this.cache = {
-            alphanet: {
-                nfts: new Map<string, CacheEntry>(),
-                nativeTokens: new Map<string, CacheEntry>()
-            },
-            testnet: {
-                nfts: new Map<string, CacheEntry>(),
-                nativeTokens: new Map<string, CacheEntry>()
-            },
-            shimmer: {
-                nfts: new Map<string, CacheEntry>(),
-                nativeTokens: new Map<string, CacheEntry>()
-            },
-            iota: {
-                nfts: new Map<string, CacheEntry>(),
-                nativeTokens: new Map<string, CacheEntry>()
-            }
-        }
+    private cache: Cache = {};
 
+    constructor(config: CONFIG) {
+        this.config = config;
+
+        this.buildCache();
         this.populateCache();
         this.scheduleCron();
     }
@@ -45,49 +26,59 @@ class TokenRegistryService {
         return this.cache;
     }
 
+    private buildCache() {
+        for (const network of this.config.networks) {
+            this.cache[network] = {};
+            for (const asset of this.config.assets) {
+                this.cache[network][asset] = new Map<string, CacheEntry>()
+            }
+        }
+    }
+
     private populateCache() {
-        console.log("Populating cache...");
-        for (const network of supportedNetworks) {
-            void this.fetchAssetData(network, "native-tokens");
-            void this.fetchAssetData(network, "nfts");
+        for (const network of this.config.networks) {
+            for (const asset of this.config.assets) {
+                void this.fetchAssetData(network, asset);
+            }
         }
     }
 
     private scheduleCron() {
-        new CronJob(this.COLLECT_TOKEN_DATA_CRON, () => this.populateCache()).start();
+        new CronJob(this.COLLECT_DATA_CRON_EXPR, () => this.populateCache()).start();
     }
 
-    private async fetchAssetData(network: SupportedNetworks, assetType: AssetType) {
+    private async fetchAssetData(network: string, assetType: string) {
         let response: AxiosResponse | undefined;
-        const assetCacheKey = assetType === "native-tokens" ? "nativeTokens" : assetType;
 
         try {
             response = await githubApiClient.get(`${network}/${assetType}?ref=dev`);
         } catch (error) {
             console.log(`Github api fetch failed (${network}/${assetType}).`, error);
+            return;
         }
 
-        if (response?.status === 200) {
-            const fileItems = response.data as GithubItem[];
+        if (!response || response.status !== 200) {
+            console.log(`Github api fetch failed (${network}/${assetType}).`, response?.status ?? "");
+            return;
+        }
 
-            for (const file of fileItems) {
-                const fileName = file.name;
-                const fileNameRegex = new RegExp(this.FILE_NAME_REGEX);
-                const match = fileName.match(fileNameRegex);
+        const fileItems = response.data as GithubItem[];
+        const assetCacheEntryUpdate = new Map<string, CacheEntry>();
 
-                if (match?.groups) {
-                    const projectName = match.groups.project;
-                    const assetId = match.groups.id;
+        for (const file of fileItems) {
+            const fileName = file.name;
+            const fileNameRegex = new RegExp(this.FILE_NAME_REGEX);
+            const match = fileName.match(fileNameRegex);
 
-                    this.cache[network][assetCacheKey].set(assetId, { projectName });
-                }
+            if (match?.groups) {
+                const projectName = match.groups.project;
+                const assetId = match.groups.id;
 
+                assetCacheEntryUpdate.set(assetId, { projectName });
             }
-        } else {
-            console.log(`Github api fetch failed (${network}/${assetType}).`, response?.status);
         }
 
-        console.log("Cache state:", this.cache);
+        this.cache[network][assetType] = assetCacheEntryUpdate;
     }
 }
 

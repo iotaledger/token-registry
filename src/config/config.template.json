@@ -1,0 +1,5 @@
+{
+    "networks": ["alphanet", "testnet", "shimmer", "iota"],
+    "assets": ["nfts", "native-tokens"]
+}
+

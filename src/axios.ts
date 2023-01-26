@@ -1,6 +1,9 @@
 import axios from "axios";
 
-const GITHUB_API_ROOT = "https://api.github.com/repos/iota-community/token-whitelist/contents/";
+const githubApiRootPath = process.env.GITHUB_API_WHITELIST_ROOT;
+if (!githubApiRootPath) {
+    throw new Error("Github api root path not set.");
+}
 
 const githubApiToken = process.env.GITHUB_TOKEN;
 if (!githubApiToken) {
@@ -8,7 +11,7 @@ if (!githubApiToken) {
 }
 
 export const githubApiClient = axios.create({
-    baseURL: GITHUB_API_ROOT,
+    baseURL: githubApiRootPath,
     headers: {
         "Accept": "application/vnd.github+json",
         "Authorization": `Bearer ${githubApiToken}`
