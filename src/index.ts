@@ -1,8 +1,8 @@
 import 'dotenv/config'
 import express, { Express, Request, Response } from 'express';
-import { AssetsRequestBody } from './models/AssetType';
-import { CacheDataAssetKey } from './models/CacheType';
-import { supportedNetworks, SupportedNetworks } from './models/Networktype';
+import { AssetsRequestBody } from './models/Assets';
+import { CacheDataAssetKey } from './models/TokenRegistryServiceCache';
+import { supportedNetworks, SupportedNetworks } from './models/Networks';
 import TokenRegistryService from './services/TokenRegistryService';
 
 const app: Express = express();
@@ -19,7 +19,7 @@ app.get('/api/network/:network/:asset/:id', (request: Request, response: Respons
     const assetCache = getAssetCache(network, asset);
     const exists = assetCache.has(id);
 
-    response.status(200).send({[id]: exists});
+    response.status(200).send({ [id]: exists });
 });
 
 app.post('/api/network/:network/:asset', (request: Request, response: Response) => {
@@ -31,7 +31,7 @@ app.post('/api/network/:network/:asset', (request: Request, response: Response) 
     validateAssetsRequestBody(body, response);
 
     const assetCache = getAssetCache(network, asset);
-    const results: {[key: string]: boolean} = {};
+    const results: { [key: string]: boolean } = {};
     for (const id of body.ids) {
         if (typeof id === 'string') {
             const exists = assetCache.has(id);

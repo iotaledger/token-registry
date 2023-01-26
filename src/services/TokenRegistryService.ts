@@ -1,10 +1,10 @@
 import { AxiosResponse } from "axios";
 import { CronJob } from "cron";
 import { githubApiClient } from "../axios";
-import { AssetType } from "../models/AssetType";
-import { CacheEntry, TokenRegistryServiceCache } from "../models/CacheType";
-import { GithubItem } from "../models/GitHubItem";
-import { SupportedNetworks, supportedNetworks } from "../models/Networktype";
+import { AssetType } from "../models/Assets";
+import { CacheEntry, TokenRegistryServiceCache } from "../models/TokenRegistryServiceCache";
+import { SupportedNetworks, supportedNetworks } from "../models/Networks";
+import { GithubItem } from "../models/Github";
 
 class TokenRegistryService {
     /**
