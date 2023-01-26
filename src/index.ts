@@ -1,8 +1,8 @@
 import 'dotenv/config'
 import express, { Express, NextFunction, Request, Response } from 'express';
 import { buildConfig, CONFIG } from './config/configSchema';
-import TokenRegistryService from './services/TokenRegistryService';
-import { assetRequestBodySchema, AssetsRequestBody } from './models/AssetRequest';
+import TokenRegistryService from './services/registryService';
+import { assetRequestBodySchema, AssetsRequestBody } from './models/api/assetRequest';
 
 const app: Express = express();
 const port = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 4444;

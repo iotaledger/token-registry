@@ -1,9 +1,9 @@
 import { AxiosResponse } from "axios";
 import { CronJob } from "cron";
-import { githubApiClient } from "../axios";
+import { CONFIG } from "../config/configSchema";
+import { githubApiClient } from "../config/axios";
 import { CacheEntry, Cache } from "../models/cache";
 import { GithubItem } from "../models/github";
-import { CONFIG } from "../config/configSchema";
 
 class TokenRegistryService {
     private COLLECT_DATA_CRON_EXPR = "0 * * * *";
