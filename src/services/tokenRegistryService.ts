@@ -6,12 +6,11 @@ import { CacheEntry, Cache } from "../models/cache";
 import { GithubItem } from "../models/github";
 import logger from "../config/logger";
 
+const COLLECT_DATA_CRON_EXPR = "0 * * * *";
+const FILE_NAME_REGEXP = new RegExp(/(?<project>\w+)-(?<id>\w+).json/);
+
 class TokenRegistryService {
-    private COLLECT_DATA_CRON_EXPR = "0 * * * *";
-
-    private FILE_NAME_REGEX = /(?<project>\w+)-(?<id>\w+).json/;
-
-    private config: CONFIG;
+    private readonly config: CONFIG;
 
     private cache: Cache = {};
 
@@ -49,7 +48,7 @@ class TokenRegistryService {
 
     private scheduleCron() {
         logger.debug("Scheduling data collection job...");
-        new CronJob(this.COLLECT_DATA_CRON_EXPR, () => {
+        new CronJob(COLLECT_DATA_CRON_EXPR, () => {
             logger.debug("Cron job starting...");
             this.populateCache()
         }).start();
@@ -74,13 +73,12 @@ class TokenRegistryService {
         }
 
         const fileItems = response.data as GithubItem[];
-        const assetCacheEntryUpdate = new Map<string, CacheEntry>();
         logger.debug(`Fetched ${fileItems.length} ${assetType} for network ${network}`);
 
+        const assetCacheEntryUpdate = new Map<string, CacheEntry>();
         for (const file of fileItems) {
             const fileName = file.name;
-            const fileNameRegex = new RegExp(this.FILE_NAME_REGEX);
-            const match = fileName.match(fileNameRegex);
+            const match = fileName.match(FILE_NAME_REGEXP);
 
             if (match?.groups) {
                 const projectName = match.groups.project;
