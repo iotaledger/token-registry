@@ -59,7 +59,7 @@ class TokenRegistryService {
         logger.info(`Fetching fresh asset ${assetType} for network ${network}`);
 
         try {
-            response = await githubApiClient.get(`${network}/${assetType}?ref=dev`);
+            response = await githubApiClient.get(`${network}/${assetType}?ref=main`);
         } catch (error) {
             logger.error(`Data fetch failed for '${network}/${assetType}'. ${JSON.stringify(error)}`);
             return;
