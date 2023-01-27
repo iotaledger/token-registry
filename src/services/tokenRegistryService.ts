@@ -17,7 +17,6 @@ class TokenRegistryService {
 
     constructor(config: CONFIG) {
         this.config = config;
-        logger.debug(`Using config ${JSON.stringify(config)}`);
 
         this.buildCache();
         this.populateCache();

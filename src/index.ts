@@ -1,12 +1,12 @@
 import 'dotenv/config'
 import express, { Express, Request, Response } from 'express';
-import { buildConfig, CONFIG } from './config/configSchema';
+import { loadConfig, CONFIG } from './config/configSchema';
 import logger from './config/logger';
 import TokenRegistryService from './services/tokenRegistryService';
 import { validateAsset, validateAssetsRequestBody, validateNetwork } from './utils/validate';
 import { AssetsRequestBody } from './models/api/assetRequest';
 
-const config: CONFIG = buildConfig();
+const config: CONFIG = loadConfig();
 const port = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 4444;
 const service = new TokenRegistryService(config);
 const app: Express = express();
@@ -15,8 +15,8 @@ app.use(express.json());
 
 app.get(
     '/api/network/:network/:asset/:id',
-    validateNetwork,
-    validateAsset,
+    validateNetwork(config),
+    validateAsset(config),
     (request: Request, response: Response) => {
         const { network, asset, id } = request.params;
         const assetCache = getAssetCache(network, asset);
@@ -27,8 +27,8 @@ app.get(
 
 app.post(
     '/api/network/:network/:asset',
-    validateNetwork,
-    validateAsset,
+    validateNetwork(config),
+    validateAsset(config),
     validateAssetsRequestBody,
     (request: Request, response: Response) => {
         const { network, asset } = request.params;

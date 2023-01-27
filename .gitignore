@@ -1,7 +1,6 @@
 node_modules
 /dist
 /logs
+config.json
 .env
-
-/src/config/config.json
 
