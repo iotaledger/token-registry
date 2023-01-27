@@ -2,7 +2,7 @@ import 'dotenv/config'
 import express, { Express, Request, Response } from 'express';
 import { buildConfig, CONFIG } from './config/configSchema';
 import logger from './config/logger';
-import TokenRegistryService from './services/registryService';
+import TokenRegistryService from './services/tokenRegistryService';
 import { validateAsset, validateAssetsRequestBody, validateNetwork } from './utils/validate';
 import { AssetsRequestBody } from './models/api/assetRequest';
 
