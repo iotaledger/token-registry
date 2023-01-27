@@ -1,13 +1,15 @@
 import 'dotenv/config'
-import express, { Express, NextFunction, Request, Response } from 'express';
+import express, { Express, Request, Response } from 'express';
 import { buildConfig, CONFIG } from './config/configSchema';
+import logger from './config/logger';
 import TokenRegistryService from './services/registryService';
-import { assetRequestBodySchema, AssetsRequestBody } from './models/api/assetRequest';
+import { validateAsset, validateAssetsRequestBody, validateNetwork } from './utils/validate';
+import { AssetsRequestBody } from './models/api/assetRequest';
 
-const app: Express = express();
-const port = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 4444;
 const config: CONFIG = buildConfig();
+const port = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 4444;
 const service = new TokenRegistryService(config);
+const app: Express = express();
 
 app.use(express.json());
 
@@ -48,35 +50,7 @@ function getAssetCache(network: string, asset: string) {
     return service.tokenRegistryCache[network][asset];
 }
 
-function validateNetwork(request: Request, response: Response, next: NextFunction) {
-    const { network } = request.params;
-    if (!config.networks.includes(network)) {
-        response.status(400).send({ error: "Bad network path parameter." });
-    } else {
-        next();
-    }
-}
-
-function validateAsset(request: Request, response: Response, next: NextFunction) {
-    const { asset } = request.params;
-    if (!config.assets.includes(asset)) {
-        response.status(400).send({ error: "Bad asset path parameter." });
-    } else {
-        next();
-    }
-}
-function validateAssetsRequestBody(request: Request, response: Response, next: NextFunction) {
-    const body = request.body as AssetsRequestBody;
-    const result = assetRequestBodySchema.safeParse(body);
-
-    if (!result.success) {
-        response.status(400).send(result.error);
-    } else {
-        next();
-    }
-}
-
 app.listen(port, () => {
-    console.log(`⚡️[server]: Server is running at http://localhost:${port}`);
+    logger.info(`⚡️Running at http://localhost:${port}`);
 });
 
