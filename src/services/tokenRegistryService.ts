@@ -6,7 +6,6 @@ import { CacheEntry, Cache } from "../models/cache";
 import { GithubItem } from "../models/github";
 import logger from "../config/logger";
 
-const COLLECT_DATA_CRON_EXPR = "0 * * * *";
 const FILE_NAME_REGEXP = new RegExp(/(?<project>\w+)-(?<id>\w+).json/);
 
 class TokenRegistryService {
@@ -48,7 +47,7 @@ class TokenRegistryService {
 
     private scheduleCron() {
         logger.debug("Scheduling data collection job...");
-        new CronJob(COLLECT_DATA_CRON_EXPR, () => {
+        new CronJob(this.config.dataFetchCronExpr, () => {
             logger.debug("Cron job starting...");
             this.populateCache()
         }).start();

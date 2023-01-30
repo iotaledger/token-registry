@@ -1,5 +1,6 @@
 {
-    "networks": ["alphanet", "testnet", "shimmer", "iota"],
-    "assets": ["nfts", "native-tokens"]
+    "networks": ["add", "networks", "here"],
+    "assets": ["assets", "here"],
+    "dataFetchCronExpr": "0 * * * *"
 }
 
