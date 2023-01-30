@@ -1,5 +1,6 @@
 export type CacheEntry = {
     projectName: string
+    metadata: object
 }
 
 type CacheAssets = {

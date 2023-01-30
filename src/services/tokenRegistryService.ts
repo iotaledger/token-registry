@@ -1,4 +1,4 @@
-import { AxiosResponse } from "axios";
+import axios, { AxiosResponse } from "axios";
 import { CronJob } from "cron";
 import { CONFIG } from "../config/configSchema";
 import { githubApiClient } from "../config/axios";
@@ -58,7 +58,7 @@ class TokenRegistryService {
         logger.info(`Fetching fresh asset ${assetType} for network ${network}`);
 
         try {
-            response = await githubApiClient.get(`${network}/${assetType}?ref=main`);
+            response = await githubApiClient.get(`${network}/${assetType}`);
         } catch (error) {
             logger.error(`Data fetch failed for '${network}/${assetType}'. ${JSON.stringify(error)}`);
             return;
@@ -71,19 +71,39 @@ class TokenRegistryService {
             return;
         }
 
-        const fileItems = response.data as GithubItem[];
-        logger.debug(`Fetched ${fileItems.length} ${assetType} for network ${network}`);
+        const githubItems = response.data as GithubItem[];
+        logger.debug(`Fetched ${githubItems.length} ${assetType} for network ${network}`);
 
         const assetCacheEntryUpdate = new Map<string, CacheEntry>();
-        for (const file of fileItems) {
-            const fileName = file.name;
+        for (const item of githubItems) {
+            if (item.type !== "file") {
+                continue;
+            }
+
+            const fileName = item.name;
             const match = fileName.match(FILE_NAME_REGEXP);
 
             if (match?.groups) {
                 const projectName = match.groups.project;
                 const assetId = match.groups.id;
 
-                assetCacheEntryUpdate.set(assetId, { projectName });
+                try {
+                    const response = await axios.get(item.download_url);
+                    if (!response || response.status !== 200) {
+                        throw new Error("Fetching metadata");
+                    }
+
+                    const metadata = response.data as object;
+                    if (Object.keys(metadata).length > 0) {
+                        assetCacheEntryUpdate.set(assetId, { projectName, metadata });
+                    } else {
+                        logger.warn(`Bad metadata content for ${assetType} with id ${assetId} (${network}). Skipping updating cache for this item.`);
+                    }
+                } catch {
+                    logger.error(
+                        `Failed to fetch item metadata for asset ${assetType} with id ${assetId} (${network}).`
+                    );
+                }
             }
         }
 
