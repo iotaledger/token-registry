@@ -85,6 +85,10 @@ app.post(
         response.status(200).send(results);
     });
 
+app.use((request: Request, response: Response) => {
+    response.status(404).send({ error: `Cannot ${request.method} ${request.url}` });
+});
+
 function getAssetCache(network: string, asset: string) {
     return service.tokenRegistryCache[network][asset];
 }
