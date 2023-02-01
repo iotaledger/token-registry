@@ -22,7 +22,22 @@ app.get(
         const assetCache = getAssetCache(network, asset);
         const exists = assetCache.has(id);
 
-        response.status(200).send({ [id]: exists });
+        response.status(200).send({ success: exists });
+    });
+
+app.get(
+    '/api/network/:network/:asset/:id/metadata',
+    validateNetwork(config),
+    validateAsset(config),
+    (request: Request, response: Response) => {
+        const { network, asset, id } = request.params;
+        const assetCache = getAssetCache(network, asset);
+        const entry = assetCache.get(id);
+
+        response.status(200).send({
+            success: !!entry,
+            metadata: entry?.metadata
+        })
     });
 
 app.post(
@@ -40,6 +55,30 @@ app.post(
             if (typeof id === 'string') {
                 const exists = assetCache.has(id);
                 results[id] = exists;
+            }
+        }
+
+        response.status(200).send(results);
+    });
+
+app.post(
+    '/api/network/:network/:asset/metadata',
+    validateNetwork(config),
+    validateAsset(config),
+    validateAssetsRequestBody,
+    (request: Request, response: Response) => {
+        const { network, asset } = request.params;
+        const body = request.body as AssetsRequestBody;
+
+        const assetCache = getAssetCache(network, asset);
+        const results: { [key: string]: object } = {};
+        for (const id of body.ids) {
+            if (typeof id === 'string') {
+                const entry = assetCache.get(id);
+                results[id] = {
+                    success: !!entry,
+                    metadata: entry?.metadata
+                }
             }
         }
 
