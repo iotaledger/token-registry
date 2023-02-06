@@ -1,0 +1,39 @@
+{
+  "name": "token-registry",
+  "description": "A simple service which reads out whitelisted tokens/NFTs and serves an API to query for them.",
+  "version": "0.0.1",
+  "scripts": {
+    "build-clean": "rimraf ./dist/*",
+    "build-compile": "tsc",
+    "build-lint": "eslint src --ext .ts",
+    "build": "npm-run-all build-lint build-clean build-compile",
+    "build-watch": "tsc --watch",
+    "serve-mon": "nodemon ./dist/index",
+    "start-dev": "run-p build-watch serve-mon",
+    "start": "node ./dist/index"
+  },
+  "dependencies": {
+    "axios": "^1.2.3",
+    "cron": "^2.2.0",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "winston": "^3.8.2",
+    "winston-daily-rotate-file": "^4.7.1",
+    "zod": "^3.20.2"
+  },
+  "devDependencies": {
+    "@types/axios": "^0.14.0",
+    "@types/cron": "^2.0.0",
+    "@types/express": "^4.17.16",
+    "@types/node": "^18.11.18",
+    "@types/winston": "^2.4.4",
+    "@typescript-eslint/eslint-plugin": "^5.49.0",
+    "eslint": "^8.32.0",
+    "eslint-plugin-import": "^2.27.5",
+    "eslint-plugin-unicorn": "^43.0.2",
+    "nodemon": "^2.0.20",
+    "npm-run-all": "^4.1.5",
+    "rimraf": "^4.1.2",
+    "typescript": "^4.9.4"
+  }
+}

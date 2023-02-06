@@ -1,0 +1,6 @@
+{
+    "networks": ["add", "networks", "here"],
+    "assets": ["assets", "here"],
+    "dataFetchCronExpr": "0 * * * *"
+}
+
