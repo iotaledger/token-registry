@@ -1,0 +1,259 @@
+openapi: 3.0.3
+info:
+  title: Token Registry REST API
+  description: This document specifies the REST API for the IOTA Token Registry.
+  contact:
+    email: contact@iota.org
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+  version: 2.0.0
+externalDocs:
+  description: Find out more about IOTA
+  url: 'https://iota.org'
+tags:
+  - name: asset
+    description: Asset routes.
+paths:
+
+  /api/network/{network}/{assetType}/{assetId}:
+    get:
+      tags:
+        - asset
+      summary: Query asset whitelist membership.
+      description: >-
+        Query an entry in the whitelist of a specific asset.
+      parameters:
+        - in: path
+          name: network
+          schema:
+            type: string
+          example: "alphanet"
+          required: true
+          description: Identifier of the network in which the asset exists.
+        - in: path
+          name: assetType
+          schema:
+            type: string
+          example: "nfts"
+          required: true
+          description: The type of the asset, corresponds to the folder name in the whitelist repo.
+        - in: path
+          name: assetId
+          schema:
+            type: string
+          example: "0xdaadb3d45e23abfade39d776b2be7640e38735f5da92802f8e67892e88b2a0a7"
+          required: true
+          description: Identifier of the asset.
+      responses:
+        '200':
+          description: "Successful operation."
+          content:
+            application/json:
+              examples:
+                asset-is-whitelisted:
+                  $ref: '#/components/examples/asset-is-whitelisted'
+                asset-is-not-whitelisted:
+                  $ref: '#/components/examples/asset-is-not-whitelisted'
+        '400':
+          description: "Unsuccessful operation: indicates that the provided parameters are invalid."
+  /api/network/{network}/{assetType}/{assetId}/metadata:
+    get:
+      tags:
+        - asset
+      summary: Query asset whitelist membership with metadata response.
+      description: >-
+        Query the metadata of an asset in the whitelist of a specific asset.
+      parameters:
+        - in: path
+          name: network
+          schema:
+            type: string
+          example: "alphanet"
+          required: true
+          description: Identifier of the network in which the asset exists.
+        - in: path
+          name: assetType
+          schema:
+            type: string
+          example: "nfts"
+          required: true
+          description: The type of the asset, corresponds to the folder name in the whitelist repo.
+        - in: path
+          name: assetId
+          schema:
+            type: string
+          example: "0xdaadb3d45e23abfade39d776b2be7640e38735f5da92802f8e67892e88b2a0a7"
+          required: true
+          description: Identifier of the asset.
+      responses:
+        '200':
+          description: "Successful operation."
+          content:
+            application/json:
+              examples:
+                asset-is-whitelisted-nft:
+                  $ref: '#/components/examples/asset-is-whitelisted-metadata-nft'
+                asset-is-whitelisted-native-token:
+                  $ref: '#/components/examples/asset-is-whitelisted-metadata-native-token'
+                asset-is-not-whitelisted:
+                  $ref: '#/components/examples/asset-is-not-whitelisted'
+        '400':
+          description: "Unsuccessful operation: indicates that the provided parameters are invalid."
+  /api/network/{network}/{assetType}:
+    post:
+      tags:
+        - asset
+      summary: Query multiple whitelist memberships.
+      description: >-
+        Query multiple whitelist memberships.
+      parameters:
+        - in: path
+          name: network
+          schema:
+            type: string
+          example: "alphanet"
+          required: true
+          description: Identifier of the network in which the assets exists.
+        - in: path
+          name: assetType
+          schema:
+            type: string
+          example: "nfts"
+          required: true
+          description: The type of the assets, corresponds to the folder name in the whitelist repo.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MultiAssetRequest'
+            examples:
+              Multi request with one item:
+                $ref: "#/components/examples/asset-multi-request"
+          application/vnd.iota.serializer-v1:
+            schema:
+              type: string
+              format: binary
+              description: block in raw binary format
+        required: true
+      responses:
+        '200':
+          description: "Successful operation."
+          content:
+            application/json:
+              examples:
+                asset-multi-request-response-whitelisted:
+                  $ref: '#/components/examples/asset-multi-request-response-whitelisted'
+                asset-multi-request-response-not-whitelisted:
+                  $ref: '#/components/examples/asset-multi-request-response-not-whitelisted'
+        '400':
+          description: "Unsuccessful operation: indicates that the provided parameters are invalid."
+  /api/network/{network}/{assetType}/metadata:
+    post:
+      tags:
+        - asset
+      summary: Query multiple whitelist memberships with metadata response.
+      description: >-
+        Query multiple whitelist memberships with metadata response.
+      parameters:
+        - in: path
+          name: network
+          schema:
+            type: string
+          example: "alphanet"
+          required: true
+          description: Identifier of the network in which the assets exists.
+        - in: path
+          name: assetType
+          schema:
+            type: string
+          example: "nfts"
+          required: true
+          description: The type of the assets, corresponds to the folder name in the whitelist repo.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MultiAssetRequest'
+            examples:
+              Multi request with one item:
+                $ref: "#/components/examples/asset-multi-request"
+          application/vnd.iota.serializer-v1:
+            schema:
+              type: string
+              format: binary
+              description: block in raw binary format
+        required: true
+      responses:
+        '200':
+          description: "Successful operation."
+          content:
+            application/json:
+              examples:
+                asset-multi-request-response-whitelisted-metadata:
+                  $ref: '#/components/examples/asset-multi-request-response-whitelisted-metadata'
+                asset-multi-request-response-not-whitelisted-metadata:
+                  $ref: '#/components/examples/asset-multi-request-response-not-whitelisted-metadata'
+        '400':
+          description: "Unsuccessful operation: indicates that the provided parameters are invalid."
+
+
+components:
+  examples:
+    asset-is-whitelisted:
+      value:
+        success: true
+    asset-is-not-whitelisted:
+      value:
+        success: false
+    asset-is-whitelisted-metadata-nft:
+      value:
+        success: true
+        metadata:
+          standard: "IRC27"
+          version: "v1.0"
+          type: "image/gif"
+          uri: "https://media.giphy.com/media/3ohzdVUbFWu0HDwr6g/giphy.gif"
+          name: "Rare dog"
+    asset-is-whitelisted-metadata-native-token:
+      value:
+        success: true
+        metadata:
+          standard: "IRC30"
+          name: "TestCoin"
+          symbol: "TEST"
+          decimals: 3
+    asset-multi-request:
+      value:
+        ids:
+          - "0x08ebe74b76c2fdaace601fd05e243484c8230abb0147f9c8fcf1fa4cccc77008980400000000"
+    asset-multi-request-response-whitelisted:
+      value:
+        "0x08ebe74b76c2fdaace601fd05e243484c8230abb0157f9c8fcf1fa4cccc77008980400000000": true
+    asset-multi-request-response-not-whitelisted:
+      value:
+        "0x08ebe74b76c2fdaace601fd05e243484c8230abb0157f9c8fcf1fa4cccc77008980400000000": false
+    asset-multi-request-response-whitelisted-metadata:
+      value:
+        "0x08ebe74b76c2fdaace601fd05e243484c8230abb0157f9c8fcf1fa4cccc77008980400000000":
+          success: true
+          metadata:
+            standard: "IRC30"
+            name: "TestCoin"
+            symbol: "TEST"
+            decimals: 3
+    asset-multi-request-response-not-whitelisted-metadata:
+      value:
+        "0x08ebe74b76c2fdaace601fd05e243484c8230abb0157f9c8fcf1fa4cccc77008980400000000":
+          success: false
+  schemas:
+    MultiAssetRequest:
+      description: Used to query for multiple assets at once.
+      properties:
+        ids:
+          type: array
+          description: The identifiers of the assets to query for.
+          items:
+            type: string
+      required:
+        - ids
