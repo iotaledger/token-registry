@@ -1,0 +1,16 @@
+version: "3"
+
+services:
+  token-registry:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: token-registry
+    env_file: .env
+    ports:
+      - "4444:4444"
+    volumes:
+      - type: bind
+        source: ./config.json
+        target: /usr/src/app/config.json
+
