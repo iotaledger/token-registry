@@ -1,4 +1,5 @@
 import 'dotenv/config'
+import cors from "cors";
 import express, { Express, Request, Response } from 'express';
 import { loadConfig, CONFIG } from './config/configSchema';
 import logger from './config/logger';
@@ -12,6 +13,7 @@ const service = new TokenRegistryService(config);
 const app: Express = express();
 
 app.use(express.json());
+app.use(cors<Request>());
 
 app.get(
     '/api/network/:network/:asset/:id',
