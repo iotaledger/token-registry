@@ -13,7 +13,10 @@ const service = new TokenRegistryService(config);
 const app: Express = express();
 
 app.use(express.json());
-app.use(cors<Request>());
+app.use(cors<Request>({
+    origin: "*",
+    methods: ["GET", "POST"]
+}));
 
 app.get(
     '/api/network/:network/:asset/:id',
