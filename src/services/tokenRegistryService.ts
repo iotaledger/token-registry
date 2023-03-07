@@ -6,7 +6,7 @@ import { CacheEntry, Cache } from "../models/cache";
 import { GithubItem } from "../models/github";
 import logger from "../config/logger";
 
-const FILE_NAME_REGEXP = new RegExp(/(?<project>\w+)-(?<id>\w+).json/);
+const FILE_NAME_REGEXP = new RegExp(/(?<project>\S+)-(?<id>\w+).json/);
 
 class TokenRegistryService {
     private readonly config: CONFIG;
