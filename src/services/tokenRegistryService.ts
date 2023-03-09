@@ -1,15 +1,25 @@
-import axios, { AxiosResponse } from "axios";
+import { AxiosResponse } from "axios";
 import { CronJob } from "cron";
 import { CONFIG } from "../config/configSchema";
-import { githubApiClient } from "../config/axios";
+import { contentClient, treeClient, blobsClient } from "../config/axios";
 import { CacheEntry, Cache } from "../models/cache";
-import { GithubItem } from "../models/github";
+import { GithubBlobItem, GithubItem, GithubTreeResponse } from "../models/github";
 import logger from "../config/logger";
 
 const FILE_NAME_REGEXP = new RegExp(/(?<project>\w+)-(?<id>\w+).json/);
 
+/**
+ * The key is a composite key of `${network}/${asset}`.
+ * The value indicates if the specific asset folder has updated on github and should be re-fetched.
+ */
+interface AssetUpdateFlags {
+    [key: string]: boolean
+}
+
 class TokenRegistryService {
     private readonly config: CONFIG;
+
+    private assetToChecksum: Map<string, string> = new Map();
 
     private cache: Cache = {};
 
@@ -37,12 +47,20 @@ class TokenRegistryService {
     }
 
     private populateCache() {
-        logger.debug("Populating cache for all networks.");
-        for (const network of this.config.networks) {
-            for (const asset of this.config.assets) {
-                void this.fetchAssetData(network, asset);
+        void this.refreshFolderHashes().then((shouldUpdateAssetData: AssetUpdateFlags | undefined) => {
+            logger.debug("Populating cache...");
+            for (const network of this.config.networks) {
+                for (const asset of this.config.assets) {
+                    const networkAssetKey = `${network}/${asset}`;
+
+                    if (shouldUpdateAssetData && shouldUpdateAssetData[networkAssetKey]) {
+                        void this.fetchAssetData(network, asset);
+                    } else {
+                        logger.debug(`Skipping fetch for asset data ${network}/${asset}. No changes.`)
+                    }
+                }
             }
-        }
+        });
     }
 
     private scheduleCron() {
@@ -53,12 +71,64 @@ class TokenRegistryService {
         }).start();
     }
 
+    private async refreshFolderHashes(): Promise<AssetUpdateFlags | undefined> {
+        let response: AxiosResponse | undefined;
+        const result: AssetUpdateFlags = {};
+
+        for (const network of this.config.networks) {
+            try {
+                logger.debug("Refreshing network folder hashes");
+                response = await contentClient.get(`/${network}/`);
+
+                if (response?.status === 200) {
+                    const networkAssets = response.data as GithubItem[];
+
+                    for (const asset of this.config.assets) {
+                        const assetItem = networkAssets.find(na => na.name === asset);
+                        if (assetItem) {
+                            logger.debug(`Adding to network/asset sha ${assetItem.sha} for ${network}/${asset}`);
+                            const mapKey = `${network}/${asset}`;
+
+                            const existingSha = this.assetToChecksum.get(mapKey);
+
+                            if (!existingSha) {
+                                this.assetToChecksum.set(mapKey, assetItem.sha);
+                                result[mapKey] = true;
+                            } else {
+                                const shouldUpdate = existingSha !== assetItem.sha;
+
+                                if (shouldUpdate) {
+                                    this.assetToChecksum.set(mapKey, assetItem.sha);
+                                    result[mapKey] = true;
+                                }
+                            }
+                        } else {
+                            logger.warn(`Failed refreshing sha for ${network}/${asset}`);
+                        }
+                    }
+                }
+            } catch (error) {
+                logger.error(`Refreshing network folder hashes failed! ${JSON.stringify(error)}`);
+                return undefined;
+            }
+        }
+
+        return result;
+    }
+
     private async fetchAssetData(network: string, assetType: string) {
         let response: AxiosResponse | undefined;
         logger.info(`Fetching fresh asset ${assetType} for network ${network}`);
 
+        const assetSha = this.assetToChecksum.get(`${network}/${assetType}`);
+
+        if (!assetSha) {
+            logger.error(`Data fetch failed for '${network}/${assetType}'. Folder sha not found in map!`);
+            return;
+        }
+
         try {
-            response = await githubApiClient.get(`${network}/${assetType}`);
+            response = await treeClient.get(`/${assetSha}`);
         } catch (error) {
             logger.error(`Data fetch failed for '${network}/${assetType}'. ${JSON.stringify(error)}`);
             return;
@@ -71,16 +141,19 @@ class TokenRegistryService {
             return;
         }
 
-        const githubItems = response.data as GithubItem[];
-        logger.debug(`Fetched ${githubItems.length} ${assetType} for network ${network}`);
+        const githubTreeResponse = response.data as GithubTreeResponse;
+        const githubTree = githubTreeResponse.tree;
+
+        logger.debug(`Fetched ${githubTree.length} ${assetType} for network ${network}`);
 
         const assetCacheEntryUpdate = new Map<string, CacheEntry>();
-        for (const item of githubItems) {
-            if (item.type !== "file") {
+
+        for (const item of githubTree) {
+            if (item.type !== "blob" || item.path === ".gitkeep") {
                 continue;
             }
 
-            const fileName = item.name;
+            const fileName = item.path;
             const match = fileName.match(FILE_NAME_REGEXP);
 
             if (match?.groups) {
@@ -88,12 +161,19 @@ class TokenRegistryService {
                 const assetId = match.groups.id;
 
                 try {
-                    const response = await axios.get(item.download_url);
+                    const response = await blobsClient.get(`/${item.sha}`);
                     if (!response || response.status !== 200) {
                         throw new Error("Fetching metadata");
                     }
 
-                    const metadata = response.data as object;
+                    const githubBlob = response.data as GithubBlobItem;
+                    const metadata: object = JSON.parse(
+                        Buffer.from(
+                            githubBlob.content,
+                            "base64"
+                        ).toString("utf8")
+                    ) as object;
+
                     if (Object.keys(metadata).length > 0) {
                         assetCacheEntryUpdate.set(assetId, { projectName, metadata });
                     } else {
