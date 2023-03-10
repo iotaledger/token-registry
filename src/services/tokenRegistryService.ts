@@ -6,7 +6,7 @@ import { CacheEntry, Cache } from "../models/cache";
 import { GithubBlobItem, GithubItem, GithubTreeResponse } from "../models/github";
 import logger from "../config/logger";
 
-const FILE_NAME_REGEXP = new RegExp(/(?<project>\w+)-(?<id>\w+).json/);
+const FILE_NAME_REGEXP = new RegExp(/(?<project>\S+)-(?<id>\w+).json/);
 
 /**
  * The key is a composite key of `${network}/${asset}`.
