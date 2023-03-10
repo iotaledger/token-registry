@@ -1,7 +1,7 @@
 {
   "name": "token-registry",
   "description": "A simple service which reads out whitelisted tokens/NFTs and serves an API to query for them.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "scripts": {
     "build-clean": "rimraf ./dist/*",
     "build-compile": "tsc",
