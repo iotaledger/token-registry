@@ -47,16 +47,17 @@ class TokenRegistryService {
     }
 
     private populateCache() {
-        void this.refreshFolderHashes().then((shouldUpdateAssetData: AssetUpdateFlags | undefined) => {
+        void this.refreshFolderHashes().then((assetUpdateFlags: AssetUpdateFlags | undefined) => {
             logger.debug("Populating cache...");
             for (const network of this.config.networks) {
                 for (const asset of this.config.assets) {
                     const networkAssetKey = `${network}/${asset}`;
+                    const shouldRefreshData = assetUpdateFlags && assetUpdateFlags[networkAssetKey];
 
-                    if (shouldUpdateAssetData && shouldUpdateAssetData[networkAssetKey]) {
+                    if (shouldRefreshData) {
                         void this.fetchAssetData(network, asset);
                     } else {
-                        logger.debug(`Skipping fetch for asset data ${network}/${asset}. No changes.`)
+                        logger.debug(`Skipping fetch for asset data ${network}/${asset}. Nothing changed.`)
                     }
                 }
             }
@@ -86,9 +87,8 @@ class TokenRegistryService {
                     for (const asset of this.config.assets) {
                         const assetItem = networkAssets.find(na => na.name === asset);
                         if (assetItem) {
-                            logger.debug(`Adding to network/asset sha ${assetItem.sha} for ${network}/${asset}`);
                             const mapKey = `${network}/${asset}`;
-
+                            logger.debug(`Adding to network/asset sha ${assetItem.sha} for ${network}/${asset}`);
                             const existingSha = this.assetToChecksum.get(mapKey);
 
                             if (!existingSha) {
@@ -174,7 +174,9 @@ class TokenRegistryService {
                         ).toString("utf8")
                     ) as object;
 
+
                     if (Object.keys(metadata).length > 0) {
+                        logger.debug(`Adding cache entry for ${network}/${assetType} asset id: ${assetId}`);
                         assetCacheEntryUpdate.set(assetId, { projectName, metadata });
                     } else {
                         logger.warn(`Bad metadata content for ${assetType} with id ${assetId} (${network}). Skipping updating cache for this item.`);
