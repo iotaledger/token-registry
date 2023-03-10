@@ -175,7 +175,7 @@ class TokenRegistryService {
                     ) as object;
 
 
-                    if (Object.keys(metadata).length > 0) {
+                    if (metadata) {
                         logger.debug(`Adding cache entry for ${network}/${assetType} asset id: ${assetId}`);
                         assetCacheEntryUpdate.set(assetId, { projectName, metadata });
                     } else {
@@ -189,6 +189,7 @@ class TokenRegistryService {
             }
         }
 
+        logger.info(`Refreshing asset data for ${network}/${assetType} finished! Replacing cache entry.`)
         this.cache[network][assetType] = assetCacheEntryUpdate;
     }
 }
