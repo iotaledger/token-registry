@@ -55,7 +55,11 @@ class TokenRegistryService {
 
     private populateCache() {
         void this.refreshFolderHashes().then((fileUpdateFlags: FileUpdateFlags[]) => {
-            logger.debug("Populating cache...");
+            if (fileUpdateFlags.length > 0) {
+                logger.debug("Updating cache...");
+            } else {
+                logger.debug("Cache is up-to-date!");
+            }
             for (const asset of fileUpdateFlags) {
                 if (asset.shouldDelete) {
                     this.deleteAssetData(asset);
@@ -198,7 +202,7 @@ class TokenRegistryService {
         }
 
         //find files that were deleted from github
-        if(itemToChecksum && gitItemsCount !== itemToChecksum.size) {
+        if (itemToChecksum && gitItemsCount !== itemToChecksum.size) {
             for (const [key, value] of itemToChecksum) {
                 const foundItem = githubTree.find(gitItem => value === gitItem.sha)
                 if (!foundItem) {
@@ -218,7 +222,7 @@ class TokenRegistryService {
     }
 
     private async fetchAssetData(asset: FileUpdateFlags) {
-        const {network, assetType, projectName, assetId, sha} = asset;
+        const { network, assetType, projectName, assetId, sha } = asset;
 
         try {
             const response = await blobsClient.get(`/${sha}`);
@@ -240,15 +244,15 @@ class TokenRegistryService {
             } else {
                 logger.warn(`Bad metadata content for ${assetType} with id ${assetId} (${network}). Skipping updating cache for this item.`);
             }
-        } catch {
+        } catch (error) {
             logger.error(
-                `Failed to fetch item metadata for asset ${assetType} with id ${assetId} (${network}).`
+                `Failed to fetch item metadata for asset ${assetType} with id ${assetId} (${network}). Cause: ${JSON.stringify(error)}`
             );
         }
     }
 
     private deleteAssetData(asset: FileUpdateFlags) {
-        const {network, assetType, assetId } = asset;
+        const { network, assetType, assetId } = asset;
         logger.debug(`Deleting cache entry for ${network}/${assetType} asset id: ${assetId}`);
 
         const itemToChecksum = this.assetToItemChecksumMap.get(`${network}/${assetType}`);
