@@ -23,10 +23,19 @@ interface FileUpdateFlags {
 class TokenRegistryService {
     private readonly config: CONFIG;
 
+    /**
+     * A map of assets (folders in github repo) to the corresponding folder checksum hash.
+    */
     private assetToChecksum: Map<string, string> = new Map();
 
+    /**
+     * A map of assets (folders in github repo) to a sub Map of contained files to file checksum hash.
+    */
     private assetToItemChecksumMap: Map<string, Map<string, string>> = new Map();
 
+    /**
+     * The cache object.
+    */
     private cache: Cache = {};
 
     constructor(config: CONFIG) {
@@ -93,12 +102,14 @@ class TokenRegistryService {
 
                     for (const asset of this.config.assets) {
                         const assetItem = networkAssets.find(na => na.name === asset);
+
                         if (assetItem) {
                             const mapKey = `${network}/${asset}`;
-                            logger.debug(`Adding to network/asset sha ${assetItem.sha} for ${network}/${asset}`);
+                            logger.debug(`Checking ${network}/${asset} folder sha...`);
                             const existingSha = this.assetToChecksum.get(mapKey);
 
                             if (!existingSha) {
+                                logger.debug(`Adding sha ${assetItem.sha} for ${network}/${asset}`);
                                 this.assetToChecksum.set(mapKey, assetItem.sha);
                                 assetsToUpdate.push(mapKey);
                             } else {
@@ -134,7 +145,7 @@ class TokenRegistryService {
         let response: AxiosResponse | undefined;
         const itemsToUpdate: FileUpdateFlags[] = [];
 
-        logger.info(`Refreshing file hashes for ${mapKey}`);
+        logger.info(`Refreshing file hashes for ${mapKey}...`);
         const assetSha = this.assetToChecksum.get(mapKey);
         const itemToChecksum = this.assetToItemChecksumMap.get(mapKey);
 
